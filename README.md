@@ -16,7 +16,7 @@ However, the company is growing quickly and we have to automate this process.
 On this interaction, you will be working to delivery at least these items:
 * Decide which tool (Rundeck, Stackstorm, Ansible AWX, or any other) is possible to be used to execute these jobs/workflows;
 * Install and setup the tool on the AWS account - You can have a [Free tier](https://aws.amazon.com/free/);
-* A task card is created in our Trello Dashboard (Mark sent it together with the Technical Assessment instructions) that we are going to invite you;
+* A task card is created in our [Trello Dashboard](https://trello.com/) that we are going to invite you;
 * Create a routine covering the scenario described above;
 * Complete the task executing this routine.
 
