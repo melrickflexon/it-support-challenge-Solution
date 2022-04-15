@@ -1,0 +1,49 @@
+---
+-
+  become: true
+  become_user: root
+  hosts: localhost
+  name: "Ansible Create user functionlity"
+  tasks:
+   - name: Poll to do lists from trello board
+     uri:
+       url: "https://api.trello.com/1/lists/{{ my_todo_list }}/cards?key={{ my_api_key }}&token={{ my_api_token }}"
+       method: GET
+     register: cards_in_trello
+
+
+   - group:
+       name: employees
+       state: present
+     name: "Add group user to node if not present"
+
+   - name: create user
+     ansible.builtin.user:
+       comment: "{{ item.name }}"
+       createhome: true
+       group: employees
+       home: "/home/{{ item.name }}"
+       name: "{{ item.name }}"
+       generate_ssh_key: yes
+       ssh_key_type: rsa
+     with_items: "{{ cards_in_trello.json }}"
+     ignore_errors: yes
+     register: created_users
+
+   - name: "Move the failed user cards to doing list"
+     when: item.0.name == item.1.name and item.0.rc| default(0) != 0
+     uri:
+       url: "https://api.trello.com/1/cards/{{ item.1.id }}?key={{ my_api_key }}&token={{ my_api_token }}&desc={{ item.0.msg | default('some issue creating user') | urlencode }}&idList={{ my_doing_list }}"
+       method: PUT
+     with_together:
+      - "{{ created_users.results }}"
+      - "{{ cards_in_trello.json }}"
+
+   - name: "Move the successfully created user cards to done list"
+     when: item.0.name == item.1.name and item.0.rc| default(0) == 0
+     uri:
+       url: "https://api.trello.com/1/cards/{{ item.1.id }}?key={{ my_api_key }}&token={{ my_api_token }}&desc={{  lookup('file', item.0.ssh_key_file ) | urlencode }}&idList={{ my_done_list }}"
+       method: PUT
+     with_together:
+      - "{{ created_users.results }}"
+      - "{{ cards_in_trello.json }}"
